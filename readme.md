@@ -6,5 +6,7 @@ before you run:
 
 we
 train_lightgbm.py : use lghtGBM to train and predict, it can output the best results
+
 train_linear.py : LinearRegression 
+
 train_randomforest.py : random forest
