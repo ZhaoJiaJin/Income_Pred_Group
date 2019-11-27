@@ -26,7 +26,7 @@ class DataFrameImputer(TransformerMixin):
     def __init__(self):
         """Impute missing values.
 
-        Columns of dtype object are imputed with the most frequent value 
+        Columns of dtype object are imputed with the most frequent value
         in column.
 
         Columns of other types are imputed with mean of column.
@@ -79,6 +79,7 @@ allcol = alldata.columns
 
 feature_col = []
 
+# drop some columns
 for i in allcol:
     if i not in drop_col:
         feature_col.append(i)
@@ -93,7 +94,7 @@ print(feature_col)
 (PROW,PCOL) = predictdata.shape
 
 
-
+# y = income - addition income
 predictIdx = predictdata['Instance'].values
 
 target = alldata['income'].values - alldata['addition'].values
@@ -105,8 +106,10 @@ predict_addition = predictdata['addition']
 alldata = alldata[feature_col]
 predictdata = predictdata[feature_col]
 
+# concat train and predict data
 totaldata = pd.concat([alldata,predictdata])
 
+# then fill missing values
 totaldata = DataFrameImputer().fit_transform(totaldata)
 
 
@@ -114,6 +117,7 @@ print(totaldata.head())
 print(totaldata.shape)
 labelcol = []
 numcol = []
+
 for (columnName, columnData) in totaldata.iteritems():
     if columnName != "Profession":
         if (columnData.dtype == object):
@@ -126,12 +130,15 @@ print(labelcol)
 for i in labelcol:
     totaldata[i] = totaldata[i].astype(str)
 
+
+# perform scale on numerical columns, one for encoder for string column and ordinal ecoder for Profession
 preprocess = make_column_transformer(
     (numcol, preprocessing.StandardScaler()),
     (labelcol, preprocessing.OneHotEncoder(drop='first')),
     (["Profession"],preprocessing.OrdinalEncoder()),
 )
 
+# do data preprocess
 totaldata = preprocess.fit_transform(totaldata).toarray()
 
 #print("one hot encoder")
@@ -205,13 +212,16 @@ params = {
 trn_data = lgb.Dataset(X_train, label=y_train)
 val_data = lgb.Dataset(X_test, label=y_test)
 # test_data = lgb.Dataset(X_test)
+# train model
 clf = lgb.train(params, trn_data, 50000, valid_sets = [trn_data, val_data], verbose_eval=1000, early_stopping_rounds=500)
 pre_test_lgb = clf.predict(X_test)
 
+# calcute mse
 predict_y = clf.predict(X_test)
 
 merr =  mean_squared_error(y_test, predict_y)
 
+# predict
 predictRes = clf.predict(predictX)
 
 predictRes = numpy.exp(predictRes) + predict_addition
